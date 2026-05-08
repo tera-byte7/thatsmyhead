@@ -10,23 +10,22 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* DARK — cinza escuro Notion */
+    /* DARK — mesmo cinza do Notion dark (#202020) */
     :root {
-      --bg:          #191919;
-      --border:      #2e2e2e;
+      --bg:          #202020;
+      --border:      #2f2f2f;
       --tagline:     #666;
-      --date:        #888;
-      --clock:       #e8e8e8;
+      --date:        #999;
+      --clock:       #e0e0e0;
       --dot-opacity: 0.10;
     }
 
-    /* LIGHT — branco Notion */
     @media (prefers-color-scheme: light) {
       :root {
         --bg:          #f7f7f5;
         --border:      #e0e0e0;
-        --tagline:     #aaa;
-        --date:        #999;
+        --tagline:     #bbb;
+        --date:        #aaa;
         --clock:       #1a1a1a;
         --dot-opacity: 0.08;
       }
@@ -36,7 +35,7 @@
 
     .tbw-header {
       background: var(--bg);
-      width: 100%; height: 100vh; min-height: 180px;
+      width: 100%; height: 100vh; min-height: 160px;
       display: flex; flex-direction: row;
       overflow: hidden; position: relative;
     }
@@ -46,35 +45,49 @@
       opacity: var(--dot-opacity); pointer-events: none;
     }
 
-    .col-left {
-      width: 20%; height: 100%;
+    /* COL 1 — globo, 18% */
+    .col-globe {
+      width: 18%; height: 100%;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; border-right: 1px solid var(--border);
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
       position: relative; z-index: 1;
     }
 
-    .col-right {
-      width: 80%; height: 100%;
-      display: flex; flex-direction: column; justify-content: space-between;
-      padding: 28px 48px; position: relative; z-index: 1;
+    /* COL 2 — título + tagline, 50% */
+    .col-title {
+      width: 50%; height: 100%;
+      display: flex; flex-direction: column;
+      justify-content: center; gap: 10px;
+      padding: 0 40px;
+      border-right: 1px solid var(--border);
+      position: relative; z-index: 1;
     }
-
-    .col-right-top  { display: flex; flex-direction: column; gap: 10px; }
-    .col-right-bottom { display: flex; flex-direction: column; gap: 6px; }
 
     .tbw-tagline {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 12px; letter-spacing: 4px;
+      font-size: 11px; letter-spacing: 4px;
       color: var(--tagline); text-transform: uppercase;
     }
+
+    /* COL 3 — data + hora, 32% */
+    .col-time {
+      width: 32%; height: 100%;
+      display: flex; flex-direction: column;
+      justify-content: center; gap: 8px;
+      padding: 0 36px;
+      position: relative; z-index: 1;
+    }
+
     .tbw-date {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 13px; letter-spacing: 3px;
+      font-size: 12px; letter-spacing: 3px;
       color: var(--date); text-transform: uppercase;
     }
+
     .tbw-clock {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 32px; letter-spacing: 6px;
+      font-size: 22px; letter-spacing: 4px;
       color: var(--clock); line-height: 1;
     }
   </style>
@@ -82,18 +95,22 @@
 <body>
   <div class="tbw-header" id="tbw-header">
     <canvas id="dotgrid"></canvas>
-    <div class="col-left">
+
+    <!-- COL 1: globo -->
+    <div class="col-globe">
       <canvas id="planet" width="140" height="140"></canvas>
     </div>
-    <div class="col-right">
-      <div class="col-right-top">
-        <canvas id="titleCanvas" height="72"></canvas>
-        <p class="tbw-tagline">build worlds · build presence</p>
-      </div>
-      <div class="col-right-bottom">
-        <p class="tbw-date" id="datedisp"></p>
-        <p class="tbw-clock" id="clockdisp"></p>
-      </div>
+
+    <!-- COL 2: título -->
+    <div class="col-title">
+      <canvas id="titleCanvas" height="80"></canvas>
+      <p class="tbw-tagline">build worlds · build presence</p>
+    </div>
+
+    <!-- COL 3: data + hora -->
+    <div class="col-time">
+      <p class="tbw-date" id="datedisp"></p>
+      <p class="tbw-clock" id="clockdisp"></p>
     </div>
   </div>
 
@@ -102,16 +119,15 @@
     const header = document.getElementById('tbw-header');
     const mq = window.matchMedia('(prefers-color-scheme: light)');
     const isDark = () => !mq.matches;
-    const dotColor = () => isDark() ? '#ffffff' : '#000000';
 
-    /* Background dot grid */
+    /* ── Background dot grid ── */
     const dotCanvas = document.getElementById('dotgrid');
     function drawBgDots() {
       dotCanvas.width  = header.offsetWidth;
       dotCanvas.height = header.offsetHeight;
       const ctx = dotCanvas.getContext('2d');
       ctx.clearRect(0, 0, dotCanvas.width, dotCanvas.height);
-      ctx.fillStyle = dotColor();
+      ctx.fillStyle = isDark() ? '#ffffff' : '#000000';
       for (let x = 16; x < dotCanvas.width; x += 16)
         for (let y = 16; y < dotCanvas.height; y += 16) {
           ctx.beginPath(); ctx.arc(x, y, 0.9, 0, Math.PI * 2); ctx.fill();
@@ -119,7 +135,7 @@
     }
     drawBgDots();
 
-    /* Rotating globe */
+    /* ── Rotating globe ── */
     const pc   = document.getElementById('planet');
     const pctx = pc.getContext('2d');
     const CX = 70, CY = 70, R = 54, COLS = 22, ROWS = 13;
@@ -155,11 +171,12 @@
     }
     drawPlanet();
 
-    /* Dot art title */
+    /* ── Dot art title ── */
     function renderDotTitle() {
       const tc     = document.getElementById('titleCanvas');
-      const availW = Math.floor(header.offsetWidth * 0.8 - 96);
-      const H      = 72;
+      const colTitle = document.querySelector('.col-title');
+      const availW = colTitle.offsetWidth - 80;
+      const H = 80;
       tc.width = availW; tc.height = H;
       const tctx = tc.getContext('2d');
 
@@ -168,32 +185,32 @@
       const octx = off.getContext('2d');
       octx.fillStyle = '#ffffff';
 
-      /* auto-fit font size */
-      let fs = 64;
+      /* auto-fit font to column width */
+      let fs = 72;
       octx.font = `${fs}px 'Bebas Neue', 'Arial Black', Impact, sans-serif`;
       while (octx.measureText('TERABYTE WORLDS').width > availW - 4 && fs > 20) {
         fs--;
         octx.font = `${fs}px 'Bebas Neue', 'Arial Black', Impact, sans-serif`;
       }
-      octx.fillText('TERABYTE WORLDS', 2, fs);
+      octx.fillText('TERABYTE WORLDS', 2, fs - 4);
 
       const imgData = octx.getImageData(0, 0, availW, H);
       const data    = imgData.data;
       tctx.clearRect(0, 0, availW, H);
 
-      const sp = 3;
+      const sp   = 3;
       const dark = isDark();
       for (let y = 1; y < H; y += sp) {
         for (let x = 1; x < availW; x += sp) {
           const idx = (y * availW + x) * 4;
           const a   = data[idx + 3];
           if (a > 40) {
-            const bright = 0.65 + 0.35 * (a / 255);
+            const bright = 0.70 + 0.30 * (a / 255);
             const v = dark
               ? Math.round(bright * 255)
               : Math.round((1 - bright * 0.88) * 255);
             tctx.fillStyle = `rgb(${v},${v},${v})`;
-            tctx.beginPath(); tctx.arc(x, y, 1.1, 0, Math.PI * 2); tctx.fill();
+            tctx.beginPath(); tctx.arc(x, y, 1.2, 0, Math.PI * 2); tctx.fill();
           }
         }
       }
@@ -207,14 +224,14 @@
 
     mq.addEventListener('change', () => { drawBgDots(); renderDotTitle(); });
 
-    /* Clock */
+    /* ── Clock ── */
     const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     function pad(n) { return n < 10 ? '0' + n : n; }
     function tick() {
       const now = new Date();
       document.getElementById('datedisp').textContent =
-        days[now.getDay()] + ' · ' + months[now.getMonth()] + ' ' + now.getDate() + ' · ' + now.getFullYear();
+        days[now.getDay()] + '\n' + months[now.getMonth()] + ' ' + now.getDate() + ' · ' + now.getFullYear();
       const h = now.getHours(), h12 = h % 12 || 12;
       document.getElementById('clockdisp').textContent =
         pad(h12) + ' : ' + pad(now.getMinutes()) + (h >= 12 ? ' pm' : ' am');
