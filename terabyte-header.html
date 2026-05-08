@@ -10,7 +10,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* DARK — mesmo cinza do Notion dark (#202020) */
     :root {
       --bg:          #202020;
       --border:      #2f2f2f;
@@ -45,7 +44,6 @@
       opacity: var(--dot-opacity); pointer-events: none;
     }
 
-    /* COL 1 — globo, 18% */
     .col-globe {
       width: 18%; height: 100%;
       display: flex; align-items: center; justify-content: center;
@@ -54,12 +52,11 @@
       position: relative; z-index: 1;
     }
 
-    /* COL 2 — título + tagline, 50% */
     .col-title {
       width: 50%; height: 100%;
       display: flex; flex-direction: column;
-      justify-content: center; gap: 10px;
-      padding: 0 40px;
+      justify-content: center; gap: 12px;
+      padding: 0 44px;
       border-right: 1px solid var(--border);
       position: relative; z-index: 1;
     }
@@ -70,12 +67,11 @@
       color: var(--tagline); text-transform: uppercase;
     }
 
-    /* COL 3 — data + hora, 32% */
     .col-time {
       width: 32%; height: 100%;
       display: flex; flex-direction: column;
-      justify-content: center; gap: 8px;
-      padding: 0 36px;
+      justify-content: center; gap: 10px;
+      padding: 0 40px;
       position: relative; z-index: 1;
     }
 
@@ -96,18 +92,15 @@
   <div class="tbw-header" id="tbw-header">
     <canvas id="dotgrid"></canvas>
 
-    <!-- COL 1: globo -->
     <div class="col-globe">
       <canvas id="planet" width="140" height="140"></canvas>
     </div>
 
-    <!-- COL 2: título -->
     <div class="col-title">
       <canvas id="titleCanvas" height="80"></canvas>
       <p class="tbw-tagline">build worlds · build presence</p>
     </div>
 
-    <!-- COL 3: data + hora -->
     <div class="col-time">
       <p class="tbw-date" id="datedisp"></p>
       <p class="tbw-clock" id="clockdisp"></p>
@@ -120,7 +113,7 @@
     const mq = window.matchMedia('(prefers-color-scheme: light)');
     const isDark = () => !mq.matches;
 
-    /* ── Background dot grid ── */
+    /* Background dot grid */
     const dotCanvas = document.getElementById('dotgrid');
     function drawBgDots() {
       dotCanvas.width  = header.offsetWidth;
@@ -135,7 +128,7 @@
     }
     drawBgDots();
 
-    /* ── Rotating globe ── */
+    /* Rotating globe */
     const pc   = document.getElementById('planet');
     const pctx = pc.getContext('2d');
     const CX = 70, CY = 70, R = 54, COLS = 22, ROWS = 13;
@@ -171,46 +164,61 @@
     }
     drawPlanet();
 
-    /* ── Dot art title ── */
+    /* Dot art title
+       Key technique: render text with wide letterSpacing on a 2x-wide offscreen
+       canvas so each letter has breathing room, then sample dots from that. */
     function renderDotTitle() {
-      const tc     = document.getElementById('titleCanvas');
+      const tc       = document.getElementById('titleCanvas');
       const colTitle = document.querySelector('.col-title');
-      const availW = colTitle.offsetWidth - 80;
-      const H = 80;
-      tc.width = availW; tc.height = H;
-      const tctx = tc.getContext('2d');
+      const availW   = colTitle.offsetWidth - 88;
+      const H        = 80;
 
-      const off = document.createElement('canvas');
-      off.width = availW; off.height = H;
+      /* offscreen is 1.6x wider to accommodate letterSpacing */
+      const offW = Math.floor(availW * 1.6);
+
+      const off  = document.createElement('canvas');
+      off.width  = offW;
+      off.height = H;
       const octx = off.getContext('2d');
       octx.fillStyle = '#ffffff';
 
-      /* auto-fit font to column width */
-      let fs = 72;
+      /* fit font — start large, shrink until text fits offscreen width */
+      let fs = 68;
       octx.font = `${fs}px 'Bebas Neue', 'Arial Black', Impact, sans-serif`;
-      while (octx.measureText('TERABYTE WORLDS').width > availW - 4 && fs > 20) {
+      octx.letterSpacing = '8px';
+      while (octx.measureText('TERABYTE WORLDS').width > offW - 4 && fs > 16) {
         fs--;
         octx.font = `${fs}px 'Bebas Neue', 'Arial Black', Impact, sans-serif`;
       }
-      octx.fillText('TERABYTE WORLDS', 2, fs - 4);
+      octx.fillText('TERABYTE WORLDS', 2, fs - 2);
 
-      const imgData = octx.getImageData(0, 0, availW, H);
+      /* sample dots from offscreen, then scale x back to availW */
+      const imgData = octx.getImageData(0, 0, offW, H);
       const data    = imgData.data;
+
+      tc.width  = availW;
+      tc.height = H;
+      const tctx = tc.getContext('2d');
       tctx.clearRect(0, 0, availW, H);
 
-      const sp   = 3;
-      const dark = isDark();
+      const sp    = 3;       /* dot spacing in offscreen pixels */
+      const scale = availW / offW;  /* map offscreen x → canvas x */
+      const dark  = isDark();
+
       for (let y = 1; y < H; y += sp) {
-        for (let x = 1; x < availW; x += sp) {
-          const idx = (y * availW + x) * 4;
+        for (let x = 1; x < offW; x += sp) {
+          const idx = (y * offW + x) * 4;
           const a   = data[idx + 3];
           if (a > 40) {
-            const bright = 0.70 + 0.30 * (a / 255);
+            const bright = 0.72 + 0.28 * (a / 255);
             const v = dark
               ? Math.round(bright * 255)
               : Math.round((1 - bright * 0.88) * 255);
             tctx.fillStyle = `rgb(${v},${v},${v})`;
-            tctx.beginPath(); tctx.arc(x, y, 1.2, 0, Math.PI * 2); tctx.fill();
+            tctx.beginPath();
+            /* dot radius 1.0 — small enough to show gaps between letters */
+            tctx.arc(x * scale, y, 1.0, 0, Math.PI * 2);
+            tctx.fill();
           }
         }
       }
@@ -224,14 +232,14 @@
 
     mq.addEventListener('change', () => { drawBgDots(); renderDotTitle(); });
 
-    /* ── Clock ── */
+    /* Clock */
     const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     function pad(n) { return n < 10 ? '0' + n : n; }
     function tick() {
       const now = new Date();
       document.getElementById('datedisp').textContent =
-        days[now.getDay()] + '\n' + months[now.getMonth()] + ' ' + now.getDate() + ' · ' + now.getFullYear();
+        days[now.getDay()] + ' · ' + months[now.getMonth()] + ' ' + now.getDate() + ' · ' + now.getFullYear();
       const h = now.getHours(), h12 = h % 12 || 12;
       document.getElementById('clockdisp').textContent =
         pad(h12) + ' : ' + pad(now.getMinutes()) + (h >= 12 ? ' pm' : ' am');
