@@ -10,92 +10,72 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* ── DARK MODE (default) ── */
+    /* DARK — cinza escuro Notion */
     :root {
-      --bg:         #0a0a0a;
-      --border:     #1a1a1a;
-      --tagline:    #333;
-      --date:       #444;
-      --clock:      #ffffff;
-      --dot-color:  #ffffff;
-      --dot-opacity: 0.05;
-      --title-dot:  255;
+      --bg:          #191919;
+      --border:      #2e2e2e;
+      --tagline:     #666;
+      --date:        #888;
+      --clock:       #e8e8e8;
+      --dot-opacity: 0.10;
     }
 
-    /* ── LIGHT MODE ── */
+    /* LIGHT — branco Notion */
     @media (prefers-color-scheme: light) {
       :root {
-        --bg:         #f5f5f5;
-        --border:     #ddd;
-        --tagline:    #aaa;
-        --date:       #999;
-        --clock:      #111111;
-        --dot-color:  #000000;
-        --dot-opacity: 0.06;
-        --title-dot:  0;
+        --bg:          #f7f7f5;
+        --border:      #e0e0e0;
+        --tagline:     #aaa;
+        --date:        #999;
+        --clock:       #1a1a1a;
+        --dot-opacity: 0.08;
       }
     }
 
-    body { background: var(--bg); }
+    html, body { background: var(--bg); width: 100%; height: 100%; }
 
     .tbw-header {
       background: var(--bg);
-      width: 100%;
-      height: 200px;
-      display: flex;
-      flex-direction: row;
-      overflow: hidden;
-      position: relative;
+      width: 100%; height: 100vh; min-height: 180px;
+      display: flex; flex-direction: row;
+      overflow: hidden; position: relative;
     }
+
     canvas#dotgrid {
-      position: absolute;
-      top: 0; left: 0;
-      opacity: var(--dot-opacity);
-      pointer-events: none;
+      position: absolute; top: 0; left: 0;
+      opacity: var(--dot-opacity); pointer-events: none;
     }
+
     .col-left {
-      width: 20%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      border-right: 1px solid var(--border);
-      position: relative;
-      z-index: 1;
+      width: 20%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; border-right: 1px solid var(--border);
+      position: relative; z-index: 1;
     }
+
     .col-right {
-      width: 80%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 24px 36px;
-      position: relative;
-      z-index: 1;
+      width: 80%; height: 100%;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 28px 48px; position: relative; z-index: 1;
     }
-    .col-right-top { display: flex; flex-direction: column; gap: 8px; }
-    .col-right-bottom { display: flex; flex-direction: column; gap: 4px; }
+
+    .col-right-top  { display: flex; flex-direction: column; gap: 10px; }
+    .col-right-bottom { display: flex; flex-direction: column; gap: 6px; }
+
     .tbw-tagline {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 3px;
-      color: var(--tagline);
-      text-transform: uppercase;
+      font-size: 12px; letter-spacing: 4px;
+      color: var(--tagline); text-transform: uppercase;
     }
     .tbw-date {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 12px;
-      letter-spacing: 3px;
-      color: var(--date);
-      text-transform: uppercase;
+      font-size: 13px; letter-spacing: 3px;
+      color: var(--date); text-transform: uppercase;
     }
     .tbw-clock {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 26px;
-      letter-spacing: 5px;
-      color: var(--clock);
-      line-height: 1;
+      font-size: 32px; letter-spacing: 6px;
+      color: var(--clock); line-height: 1;
     }
   </style>
 </head>
@@ -103,11 +83,11 @@
   <div class="tbw-header" id="tbw-header">
     <canvas id="dotgrid"></canvas>
     <div class="col-left">
-      <canvas id="planet" width="130" height="130"></canvas>
+      <canvas id="planet" width="140" height="140"></canvas>
     </div>
     <div class="col-right">
       <div class="col-right-top">
-        <canvas id="titleCanvas" height="56"></canvas>
+        <canvas id="titleCanvas" height="72"></canvas>
         <p class="tbw-tagline">build worlds · build presence</p>
       </div>
       <div class="col-right-bottom">
@@ -120,44 +100,38 @@
   <script>
   (function () {
     const header = document.getElementById('tbw-header');
-
-    // Theme detection
-    const isDark = () => !window.matchMedia('(prefers-color-scheme: light)').matches;
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const isDark = () => !mq.matches;
     const dotColor = () => isDark() ? '#ffffff' : '#000000';
 
-    // Background dot grid
+    /* Background dot grid */
     const dotCanvas = document.getElementById('dotgrid');
     function drawBgDots() {
-      dotCanvas.width = header.offsetWidth;
+      dotCanvas.width  = header.offsetWidth;
       dotCanvas.height = header.offsetHeight;
       const ctx = dotCanvas.getContext('2d');
+      ctx.clearRect(0, 0, dotCanvas.width, dotCanvas.height);
       ctx.fillStyle = dotColor();
       for (let x = 16; x < dotCanvas.width; x += 16)
         for (let y = 16; y < dotCanvas.height; y += 16) {
-          ctx.beginPath();
-          ctx.arc(x, y, 0.9, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(x, y, 0.9, 0, Math.PI * 2); ctx.fill();
         }
     }
     drawBgDots();
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-      drawBgDots();
-      renderDotTitle();
-    });
 
-    // Rotating globe
-    const pc = document.getElementById('planet');
+    /* Rotating globe */
+    const pc   = document.getElementById('planet');
     const pctx = pc.getContext('2d');
-    const CX = 65, CY = 65, R = 50, COLS = 20, ROWS = 12;
+    const CX = 70, CY = 70, R = 54, COLS = 22, ROWS = 13;
     let angle = 0;
     function drawPlanet() {
-      pctx.clearRect(0, 0, 130, 130);
+      pctx.clearRect(0, 0, 140, 140);
       const dots = [];
       for (let row = 0; row <= ROWS; row++) {
-        const lat = (row / ROWS) * Math.PI;
-        const y3d = Math.cos(lat) * R;
+        const lat  = (row / ROWS) * Math.PI;
+        const y3d  = Math.cos(lat) * R;
         const latR = Math.sin(lat) * R;
-        const n = Math.max(1, Math.round(COLS * Math.sin(lat)));
+        const n    = Math.max(1, Math.round(COLS * Math.sin(lat)));
         for (let col = 0; col < n; col++) {
           const lng = (col / n) * Math.PI * 2 + angle;
           const x3d = Math.cos(lng) * latR;
@@ -170,50 +144,56 @@
       }
       dots.sort((a, b) => a.z - b.z);
       for (const d of dots) {
-        const base = isDark() ? Math.round(d.b * 255) : Math.round((1 - d.b * 0.85) * 255);
+        const base = isDark()
+          ? Math.round(d.b * 255)
+          : Math.round((1 - d.b * 0.85) * 255);
         pctx.fillStyle = `rgb(${base},${base},${base})`;
-        pctx.beginPath();
-        pctx.arc(d.px, d.py, 2.2, 0, Math.PI * 2);
-        pctx.fill();
+        pctx.beginPath(); pctx.arc(d.px, d.py, 2.4, 0, Math.PI * 2); pctx.fill();
       }
       angle += 0.006;
       requestAnimationFrame(drawPlanet);
     }
     drawPlanet();
 
-    // Dot art title
+    /* Dot art title */
     function renderDotTitle() {
-      const tc = document.getElementById('titleCanvas');
-      const availW = Math.floor(header.offsetWidth * 0.8 - 72);
-      tc.width = availW;
-      tc.height = 56;
+      const tc     = document.getElementById('titleCanvas');
+      const availW = Math.floor(header.offsetWidth * 0.8 - 96);
+      const H      = 72;
+      tc.width = availW; tc.height = H;
       const tctx = tc.getContext('2d');
 
       const off = document.createElement('canvas');
-      off.width = availW;
-      off.height = 56;
+      off.width = availW; off.height = H;
       const octx = off.getContext('2d');
       octx.fillStyle = '#ffffff';
-      octx.font = `46px 'Bebas Neue', 'Arial Black', Impact, sans-serif`;
-      octx.fillText('TERABYTE WORLDS', 2, 46);
 
-      const imgData = octx.getImageData(0, 0, availW, 56);
-      const data = imgData.data;
-      tctx.clearRect(0, 0, availW, 56);
+      /* auto-fit font size */
+      let fs = 64;
+      octx.font = `${fs}px 'Bebas Neue', 'Arial Black', Impact, sans-serif`;
+      while (octx.measureText('TERABYTE WORLDS').width > availW - 4 && fs > 20) {
+        fs--;
+        octx.font = `${fs}px 'Bebas Neue', 'Arial Black', Impact, sans-serif`;
+      }
+      octx.fillText('TERABYTE WORLDS', 2, fs);
+
+      const imgData = octx.getImageData(0, 0, availW, H);
+      const data    = imgData.data;
+      tctx.clearRect(0, 0, availW, H);
 
       const sp = 3;
       const dark = isDark();
-      for (let y = 1; y < 56; y += sp) {
+      for (let y = 1; y < H; y += sp) {
         for (let x = 1; x < availW; x += sp) {
           const idx = (y * availW + x) * 4;
-          const a = data[idx + 3];
+          const a   = data[idx + 3];
           if (a > 40) {
-            const bright = 0.55 + 0.45 * (a / 255);
-            const v = dark ? Math.round(bright * 255) : Math.round((1 - bright * 0.9) * 255);
+            const bright = 0.65 + 0.35 * (a / 255);
+            const v = dark
+              ? Math.round(bright * 255)
+              : Math.round((1 - bright * 0.88) * 255);
             tctx.fillStyle = `rgb(${v},${v},${v})`;
-            tctx.beginPath();
-            tctx.arc(x, y, 0.9, 0, Math.PI * 2);
-            tctx.fill();
+            tctx.beginPath(); tctx.arc(x, y, 1.1, 0, Math.PI * 2); tctx.fill();
           }
         }
       }
@@ -225,8 +205,10 @@
       setTimeout(renderDotTitle, 800);
     }
 
-    // Clock
-    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    mq.addEventListener('change', () => { drawBgDots(); renderDotTitle(); });
+
+    /* Clock */
+    const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     function pad(n) { return n < 10 ? '0' + n : n; }
     function tick() {
