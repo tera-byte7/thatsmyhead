@@ -240,9 +240,8 @@
       const now = new Date();
       document.getElementById('datedisp').textContent =
         days[now.getDay()] + ' · ' + months[now.getMonth()] + ' ' + now.getDate() + ' · ' + now.getFullYear();
-      const h = now.getHours(), h12 = h % 12 || 12;
       document.getElementById('clockdisp').textContent =
-        pad(h12) + ' : ' + pad(now.getMinutes()) + (h >= 12 ? ' pm' : ' am');
+  pad(now.getHours()) + ' : ' + pad(now.getMinutes());
       setTimeout(tick, 1000);
     }
     tick();
